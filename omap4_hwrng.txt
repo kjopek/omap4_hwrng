@@ -1,0 +1,56 @@
+TI OMAP 4 Hardware RNG support for FreeBSD
+==========================================
+
+Hardware details
+----------------
+
+Warning: the following information is based on analysis of Linux driver
+for OMAP4 RNG.
+
+RNG is mapped at 0x48310000 for AM335x.
+
+Registers offsets (register size: 32b):
+  OUTPUT_L	0x00
+  OUTPUT_H	0x04
+  STATUS	0x08
+  INTMASK	0x0c
+  INTACK	0x10
+  CONTROL	0x14
+  CONFIG	0x18
+  ALARMCNT	0x1c
+  FROENABLE	0x20
+  FRODETUNE	0x24
+  ALARMMASK	0x28
+  ALARMSTOP	0x2c
+  REV		0x1FE0
+  SYSCONFIG	0x1FE4
+
+RNG returns 64 bits of entropy.
+
+Register description
+
+ * OUTPUT_L, OUTPUT_H
+   |    31 - 0    |
+   ================
+   | random value |
+
+ * STATUS
+   |31-1|      0     |
+   ===================
+   | ?? | DATA_READY |
+
+ * INTMASK
+   |31-2|      1     |       0        |
+   ====================================
+   | ?? | READY MASK | SHUTDOWN OFLO? |
+
+
+
+DTS (am335x):
+  rng: rng@48310000 {
+  	compatible = "ti,omap4-rng';
+	ti,hwmods = "rng",
+	reg = <0x48310000 0x2000>;
+	interrupts = <111>;
+  };
+
