@@ -101,7 +101,13 @@ omap4_hwrng_init(struct omap4_hwrng_softc *sc)
 static void
 omap4_hwrng_stop(struct omap4_hwrng_softc *sc)
 {
+	int val;
 
+	val = HWRNG_READ(sc, OMAP4_HWRNG_CONTROL);
+	val &= ~OMAP4_HWRNG_CONTROL_ENABLE_TRNG;
+	/* Driver for Linux writes value to CONFIG register
+	 * maybe it is broken? Needs tests */
+	HWRNG_WRITE(sc, OMAP4_HWRNG_CONTROL, val);
 }
 
 static void
@@ -186,6 +192,10 @@ omap4_hwrng_detach(device_t dev)
 static int
 omap4_hwrng_suspend(device_t dev)
 {
+	struct omap4_hwrng_softc *sc;
+
+	sc = device_get_softc(dev);
+	omap4_hwrng_stop(sc);
 	return (0);
 }
 
@@ -193,6 +203,7 @@ static int
 omap4_hwrng_resume(device_t dev)
 {
 	struct omap4_hwrng_softc *sc;
+
 	sc = device_get_softc(dev);
 	return (omap4_hwrng_init(sc));
 }
