@@ -22,6 +22,15 @@
 #define OMAP4_HWRNG_REV		(0x1FE0)
 #define OMAP4_HWRNG_SYSCONFIG	(0x1FE4)
 
+#define OMAP4_HWRNG_DATA_SIZE	(0x08)
+
+#define OMAP4_HWRNG_STATUS_READY	(0x01)
+#define OMAP4_HWRNG_INTACK_READY_MASK	(0x01)
+
+#define HWRNG_READ(_sc, reg)	bus_read_4((_sc)->sc_mem_res, reg)
+#define HWRNG_WRITE(_sc, reg, val) \
+	bus_write_4((_sc)->sc_mem_res, reg, val)
+
 struct omap4_hwrng_softc {
 	device_t	sc_dev;
 	struct mtx	sc_mtx;

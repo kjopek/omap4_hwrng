@@ -25,6 +25,8 @@
 
 // TODO: Add RANDOM_PURE_OMAP4 to /sys/random.h
 
+static int omap4_hwrng_read(void *buf, int c);
+
 static struct random_hardware_source random_omap4_rng = {
 	.ident = "OMAP4 Hardware RNG",
 	.source = RANDOM_PURE_OMAP4,
@@ -33,6 +35,50 @@ static struct random_hardware_source random_omap4_rng = {
 
 static struct omap4_hwrng_softc *softc = NULL;
 static devclass_t omap4_hwrng_devclass;
+
+static int inline
+omap4_hwrng_data_ready(struct omap4_hwrng_softc *sc)
+{
+	int ret;
+
+	ret = HWRNG_READ(sc, OMAP4_HWRNG_STATUS) & OMAP4_HWRNG_STATUS_READY;
+	return ret;
+}
+
+static uint64_t inline
+omap4_hwrng_get_data(struct omap4_hwrng_softc *sc)
+{
+	uint64_t ret;
+	uint32_t reg0, reg1;
+	reg0 = HWRNG_READ(sc, OMAP4_HWRNG_OUTPUT_H);
+	reg1 = HWRNG_READ(sc, OMAP4_HWRNG_OUTPUT_L);
+	HWRNG_WRITE(sc, OMAP4_HWRNG_INTACK, OMAP4_HWRNG_INTACK_READY_MASK);
+	ret = ((uint64_t)reg0 << 32) | reg1;
+
+	return ret;
+}
+
+static int
+omap4_hwrng_read(void *buf, int c)
+{
+	uint64_t tmp;
+	size_t fetched;
+	char *tmp_b;
+
+	tmp_b = buf;
+
+	for (fetched=0; fetched < c; fetched += OMAP4_HWRNG_DATA_SIZE) {
+		/* wait until next portion of data comes */
+		while(!omap4_hwrng_data_ready(softc)) {
+			/* XXX: delay required? */
+		}
+		tmp = omap4_hwrng_get_data(softc);
+		memcpy(tmp_b+fetched, &tmp, 
+		    MIN(c-fetched, OMAP4_HWRNG_DATA_SIZE));
+	}
+
+	return (c);
+}
 
 static int
 omap4_hwrng_init(struct omap4_hwrng_softc *sc)
@@ -97,7 +143,7 @@ omap4_hwrng_attach(device_t dev)
 		return (ENXIO);
 	}
 
-	if (bus_setup_intr(dev, sc->sc_irq_res, INTR_TYPE_MPSAFE, NULL,
+	if (bus_setup_intr(dev, sc->sc_irq_res, INTR_MPSAFE, NULL,
 			   omap4_hwrng_intr, sc, &sc->sc_intr_handler) != 0) {
 		bus_release_resource(dev, SYS_RES_IRQ, 0, sc->sc_irq_res);
 		bus_release_resource(dev, SYS_RES_MEMORY, 0, sc->sc_irq_res);
