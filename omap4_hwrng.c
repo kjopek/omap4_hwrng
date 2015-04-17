@@ -50,12 +50,12 @@ omap4_hwrng_get_data(struct omap4_hwrng_softc *sc)
 {
 	uint64_t ret;
 	uint32_t reg0, reg1;
+
 	reg0 = HWRNG_READ(sc, OMAP4_HWRNG_OUTPUT_H);
 	reg1 = HWRNG_READ(sc, OMAP4_HWRNG_OUTPUT_L);
 	HWRNG_WRITE(sc, OMAP4_HWRNG_INTACK, OMAP4_HWRNG_INTACK_READY_MASK);
 	ret = ((uint64_t)reg0 << 32) | reg1;
-
-	return ret;
+	return (ret);
 }
 
 static int
