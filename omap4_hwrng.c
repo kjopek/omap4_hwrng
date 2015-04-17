@@ -42,7 +42,7 @@ omap4_hwrng_data_ready(struct omap4_hwrng_softc *sc)
 	int ret;
 
 	ret = HWRNG_READ(sc, OMAP4_HWRNG_STATUS) & OMAP4_HWRNG_STATUS_READY;
-	return ret;
+	return (ret);
 }
 
 static uint64_t inline
@@ -67,7 +67,7 @@ omap4_hwrng_read(void *buf, int c)
 
 	tmp_b = buf;
 
-	for (fetched=0; fetched < c; fetched += OMAP4_HWRNG_DATA_SIZE) {
+	for (fetched = 0; fetched < c; fetched += OMAP4_HWRNG_DATA_SIZE) {
 		/* wait until next portion of data comes */
 		while(!omap4_hwrng_data_ready(softc)) {
 			/* XXX: delay required? */
