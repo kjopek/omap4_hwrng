@@ -83,8 +83,19 @@ omap4_hwrng_read(void *buf, int c)
 static int
 omap4_hwrng_init(struct omap4_hwrng_softc *sc)
 {
+	uint32_t val;
+	
+	if (HWRNG_READ(sc, OMAP4_HWRNG_CONTROL) &
+	    OMAP4_HWRNG_CONTROL_ENABLE_TRNG)
+		return (0);
+	
+	val = OMAP4_HWRNG_CONFIG_MIN_REFIL_CYCLES;
+	val |= OMAP4_HWRNG_CONFIG_MAX_REFIL_CYCLES << 16;
+	HWRNG_WRITE(sc, OMAP4_HWRNG_CONFIG, val);
+	HWRNG_WRITE(sc, OMAP4_HWRNG_FRODETUNE, 0);
+	HWRNG_WRITE(sc, OMAP4_HWRNG_FROENABLE, 0xffffff);
 
-	return (0);	
+	return (0);
 }
 
 static void
@@ -151,9 +162,7 @@ omap4_hwrng_attach(device_t dev)
 		return (ENXIO);
 	}
 
-	omap4_hwrng_init(sc);
-
-	return (0);
+	return (omap4_hwrng_init(sc));
 }
 
 static int

@@ -25,6 +25,7 @@
 /* Masks, important constants */
 #define OMAP4_HWRNG_DATA_SIZE		(0x08)
 #define OMAP4_HWRNG_STATUS_READY	(0x01)
+#define OMAP4_HWRNG_CONTROL_ENABLE_TRNG	(0x01 << 10)
 #define OMAP4_HWRNG_INTACK_READY	(0x01)
 
 #define HWRNG_READ(_sc, reg)	bus_read_4((_sc)->sc_mem_res, reg)
