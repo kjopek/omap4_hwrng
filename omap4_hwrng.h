@@ -1,6 +1,10 @@
 #ifndef __OMAP4_HWRNG_H__
 #define __OMAP4_HWRNG_H__
 
+#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/rman.h>
+
 #define OMAP4_HWRNG_OUTPUT_L	(0x00)
 #define OMAP4_HWRNG_OUTPUT_H	(0x04)
 #define OMAP4_HWRNG_STATUS	(0x08)

@@ -30,3 +30,11 @@
 
 # Debug files
 *.dSYM/
+
+@
+machine
+x86
+arm
+device_if.h
+bus_if.h
+ofw_bus_if.h

@@ -4,16 +4,24 @@
 #include <sys/malloc.h>
 #include <sys/module.h>
 #include <sys/random.h>
-#include <sys/selfinfo.h>
+#include <sys/selinfo.h>
 #include <sys/systm.h>
 
-#include <dev/randomdev/randomdev.h>
-#include <dev/randomdev/randomdev_soft.h>
-#include <dev/randomdev/random_harvestq.h>
-#include <dev/randomdev/live_entropy_sources.h>
-#include <dev/randomdev/random_adaptors.h>
+#include <dev/random/randomdev.h>
+#include <dev/random/randomdev_soft.h>
+#include <dev/random/random_harvestq.h>
+#include <dev/random/live_entropy_sources.h>
+#include <dev/random/random_adaptors.h>
 
-#include "OMAP4_hwrng.h"
+#include <dev/fdt/fdt_common.h>
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_bus.h>
+#include <dev/ofw/ofw_bus_subr.h>
+
+#include <machine/bus.h>
+#include <machine/fdt.h>
+
+#include "omap4_hwrng.h"
 
 // TODO: Add RANDOM_PURE_OMAP4 to /sys/random.h
 
@@ -41,7 +49,7 @@ omap4_hwrng_probe(device_t dev)
 	if (!ofw_bus_is_compatible(dev, "ti,omap4-rng"))
 		return (ENXIO);
 
-	device_set_desc(dev, "omap4 Hardware RNG");
+	device_set_desc(dev, "OMAP4 Hardware RNG");
 
 	return (BUS_PROBE_DEFAULT);
 }
