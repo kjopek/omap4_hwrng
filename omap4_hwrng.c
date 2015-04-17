@@ -32,12 +32,26 @@ static struct random_hardware_source random_omap4_rng = {
 }; 
 
 static struct omap4_hwrng_softc *softc = NULL;
+static devclass_t omap4_hwrng_devclass;
 
 static int
-omap4_hwrng_init(void)
+omap4_hwrng_init(struct omap4_hwrng_softc *sc)
 {
 
 	return (0);	
+}
+
+static void
+omap4_hwrng_stop(struct omap4_hwrng_softc *sc)
+{
+
+}
+
+static void
+omap4_hwrng_intr(void *arg)
+{
+	struct omap4_hwrng_softc *sc;
+
 }
 
 static int
@@ -74,32 +88,77 @@ omap4_hwrng_attach(device_t dev)
 		return (ENXIO);
 	}
 
-	
+	rid = 0;
+	sc->sc_irq_res = bus_alloc_resource_any(dev, SYS_RES_IRQ, &rid,
+	    RF_ACTIVE);
+	if (!sc->sc_irq_res) {
+		device_printf(dev, "cannot allocate interrupt resources\n");
+		bus_release_resource(dev, SYS_RES_MEMORY, 0, sc->sc_mem_res);
+		return (ENXIO);
+	}
 
+	if (bus_setup_intr(dev, sc->sc_irq_res, INTR_TYPE_MPSAFE, NULL,
+			   omap4_hwrng_intr, sc, &sc->sc_intr_handler) != 0) {
+		bus_release_resource(dev, SYS_RES_IRQ, 0, sc->sc_irq_res);
+		bus_release_resource(dev, SYS_RES_MEMORY, 0, sc->sc_irq_res);
+		device_printf(dev, "cannot setup intr handler");
+		return (ENXIO);
+	}
+
+	omap4_hwrng_init(sc);
+
+	return (0);
 }
 
 static int
-omap4_hwrng_modevent(module_t mod, int type, void *unused)
+omap4_hwrng_detach(device_t dev)
 {
-	int error = 0;
-	switch (type) {
-	case MOD_LOAD:
-		error = omap4_hwrng_probe();
-		if (!error) {
-			live_entropy_source_register(&random_omap4_rng);
-			omap4_hwrng_init();
-		}
-		break;
+	struct omap4_hwrng_softc *sc;
 
-	case MOD_UNLOAD:
-		live_entropy_source_deregister(&random_omap4_rng);
-		break;
+	sc = device_get_softc(dev);
+	omap4_hwrng_stop(sc);
 
-	default:
-		break;
-	}
+	if (sc->sc_intr_handler)
+		bus_teardown_intr(dev, sc->sc_irq_res, sc->sc_intr_handler);
+	if (sc->sc_irq_res)
+		bus_release_resource(dev, SYS_RES_IRQ, 0, sc->sc_irq_res);
+	if (sc->sc_mem_res)
+		bus_release_resource(dev, SYS_RES_MEMORY, 0, sc->sc_mem_res);
 
-	return (error);
+	return (bus_generic_detach(dev));
 }
 
-LIVE_ENTROPY_SRC_MODULE(omap4_hwrng, omap4_hwrng_modevent, 1);
+static int
+omap4_hwrng_suspend(device_t dev)
+{
+	return (0);
+}
+
+static int
+omap4_hwrng_resume(device_t dev)
+{
+	struct omap4_hwrng_softc *sc;
+	sc = device_get_softc(dev);
+	return (omap4_hwrng_init(sc));
+}
+
+
+static device_method_t omap4_hwrng_methods[] = {
+	DEVMETHOD(device_probe,		omap4_hwrng_probe),
+	DEVMETHOD(device_attach,	omap4_hwrng_attach),
+	DEVMETHOD(device_detach,	omap4_hwrng_detach),
+	DEVMETHOD(device_suspend,	omap4_hwrng_suspend),
+	DEVMETHOD(device_resume,	omap4_hwrng_resume),
+	{0, 0}
+};
+
+static driver_t omap4_hwrng_driver = {
+	"omap4_hwrng",
+	omap4_hwrng_methods,
+	sizeof(struct omap4_hwrng_softc)
+};
+
+DRIVER_MODULE(omap4_hwrng, simplebus, omap4_hwrng_driver, omap4_hwrng_devclass, 0, 0);
+MODULE_VERSION(omap4_hwrng, 1);
+MODULE_DEPEND(omap4_hwrng, simplebus, 1, 1, 1);
+MODULE_DEPEND(omap4_hwrng, random, 1, 1, 1);

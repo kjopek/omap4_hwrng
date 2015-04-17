@@ -5,6 +5,8 @@
 #include <sys/types.h>
 #include <sys/rman.h>
 
+/* Registers */
+
 #define OMAP4_HWRNG_OUTPUT_L	(0x00)
 #define OMAP4_HWRNG_OUTPUT_H	(0x04)
 #define OMAP4_HWRNG_STATUS	(0x08)
@@ -20,11 +22,12 @@
 #define OMAP4_HWRNG_REV		(0x1FE0)
 #define OMAP4_HWRNG_SYSCONFIG	(0x1FE4)
 
-struct omap_hwrng_softc {
+struct omap4_hwrng_softc {
 	device_t	sc_dev;
 	struct mtx	sc_mtx;
-	struct resource	sc_irq_res;
-	struct resource sc_mem_res;
+	struct resource	*sc_irq_res;
+	struct resource *sc_mem_res;
+	void		*sc_intr_handler;
 };
 
 #endif
