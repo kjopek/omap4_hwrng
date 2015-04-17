@@ -53,7 +53,7 @@ omap4_hwrng_get_data(struct omap4_hwrng_softc *sc)
 
 	reg0 = HWRNG_READ(sc, OMAP4_HWRNG_OUTPUT_H);
 	reg1 = HWRNG_READ(sc, OMAP4_HWRNG_OUTPUT_L);
-	HWRNG_WRITE(sc, OMAP4_HWRNG_INTACK, OMAP4_HWRNG_INTACK_READY_MASK);
+	HWRNG_WRITE(sc, OMAP4_HWRNG_INTACK, OMAP4_HWRNG_INTACK_READY);
 	ret = ((uint64_t)reg0 << 32) | reg1;
 	return (ret);
 }
