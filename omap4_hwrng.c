@@ -53,7 +53,9 @@ omap4_hwrng_get_data(struct omap4_hwrng_softc *sc)
 
 	reg0 = HWRNG_READ(sc, OMAP4_HWRNG_OUTPUT_H);
 	reg1 = HWRNG_READ(sc, OMAP4_HWRNG_OUTPUT_L);
+	mtx_lock(&(sc->sc_mtx));
 	HWRNG_WRITE(sc, OMAP4_HWRNG_INTACK, OMAP4_HWRNG_INTACK_READY);
+	mtx_unlock(&(sc->sc_mtx));
 	ret = ((uint64_t)reg0 << 32) | reg1;
 	return (ret);
 }
@@ -85,6 +87,7 @@ omap4_hwrng_init(struct omap4_hwrng_softc *sc)
 {
 	uint32_t val;
 
+	mtx_lock(&(sc->sc_mtx));
 	if (HWRNG_READ(sc, OMAP4_HWRNG_CONTROL) &
 	    OMAP4_HWRNG_CONTROL_ENABLE_TRNG)
 		return (0);
@@ -102,6 +105,7 @@ omap4_hwrng_init(struct omap4_hwrng_softc *sc)
 	val = OMAP4_HWRNG_CONTROL_STARTUP_CYCLES << 16;
 	val |= OMAP4_HWRNG_CONTROL_ENABLE_TRNG;
 	HWRNG_WRITE(sc, OMAP4_HWRNG_CONTROL, val);
+	mtx_unlock(&(sc->sc_mtx));
 	return (0);
 }
 
@@ -112,9 +116,11 @@ omap4_hwrng_stop(struct omap4_hwrng_softc *sc)
 
 	val = HWRNG_READ(sc, OMAP4_HWRNG_CONTROL);
 	val &= ~OMAP4_HWRNG_CONTROL_ENABLE_TRNG;
+	mtx_lock(&(sc->sc_mtx));
 	/* Driver for Linux writes value to CONFIG register
 	 * maybe it is broken? Needs tests */
 	HWRNG_WRITE(sc, OMAP4_HWRNG_CONTROL, val);
+	mtx_unlock(&(sc->sc_mtx));
 }
 
 static void
@@ -122,6 +128,7 @@ omap4_hwrng_intr(void *arg)
 {
 	uint32_t tmp;
 
+	mtx_lock(&(softc->sc_mtx));
 	HWRNG_WRITE(softc, OMAP4_HWRNG_ALARMMASK, 0);
 	HWRNG_WRITE(softc, OMAP4_HWRNG_ALARMSTOP, 0);
 
@@ -131,6 +138,7 @@ omap4_hwrng_intr(void *arg)
 	HWRNG_WRITE(softc, OMAP4_HWRNG_FROENABLE, 0xffffff);
 
 	HWRNG_WRITE(softc, OMAP4_HWRNG_INTACK, OMAP4_HWRNG_INTACK_SHUTDOWN_OFLO);
+	mtx_unlock(&(softc->sc_mtx));
 }
 
 static int
@@ -184,6 +192,9 @@ omap4_hwrng_attach(device_t dev)
 		return (ENXIO);
 	}
 
+	mtx_init(&(sc->sc_mtx), device_get_nameunit(dev), "omap4_hwrng",
+		    MTX_DEF);
+
 	omap4_hwrng_init(sc);
 	live_entropy_source_register(&random_omap4_rng);
 
@@ -199,6 +210,7 @@ omap4_hwrng_detach(device_t dev)
 
 	live_entropy_source_deregister(&random_omap4_rng);
 	omap4_hwrng_stop(sc);
+	mtx_destroy(&(sc->sc_mtx));
 
 	if (sc->sc_intr_handler)
 		bus_teardown_intr(dev, sc->sc_irq_res, sc->sc_intr_handler);

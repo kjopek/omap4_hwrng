@@ -4,6 +4,8 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/rman.h>
+#include <sys/lock.h>
+#include <sys/mutex.h>
 
 /* Registers */
 
