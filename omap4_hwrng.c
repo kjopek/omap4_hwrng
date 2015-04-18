@@ -184,7 +184,10 @@ omap4_hwrng_attach(device_t dev)
 		return (ENXIO);
 	}
 
-	return (omap4_hwrng_init(sc));
+	omap4_hwrng_init(sc);
+	live_entropy_source_register(&random_omap4_rng);
+
+	return (0);
 }
 
 static int
@@ -193,6 +196,8 @@ omap4_hwrng_detach(device_t dev)
 	struct omap4_hwrng_softc *sc;
 
 	sc = device_get_softc(dev);
+
+	live_entropy_source_deregister(&random_omap4_rng);
 	omap4_hwrng_stop(sc);
 
 	if (sc->sc_intr_handler)
