@@ -87,11 +87,11 @@ omap4_hwrng_init(struct omap4_hwrng_softc *sc)
 {
 	uint32_t val;
 
-	mtx_lock(&(sc->sc_mtx));
 	if (HWRNG_READ(sc, OMAP4_HWRNG_CONTROL) &
 	    OMAP4_HWRNG_CONTROL_ENABLE_TRNG)
 		return (0);
-
+	
+	mtx_lock(&(sc->sc_mtx));
 	val = OMAP4_HWRNG_CONFIG_MIN_REFIL_CYCLES;
 	val |= OMAP4_HWRNG_CONFIG_MAX_REFIL_CYCLES << 16;
 	HWRNG_WRITE(sc, OMAP4_HWRNG_CONFIG, val);
