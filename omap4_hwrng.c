@@ -177,7 +177,7 @@ omap4_hwrng_attach(device_t dev)
 	}
 
 	if (bus_setup_intr(dev, sc->sc_irq_res, INTR_MPSAFE, NULL,
-			   omap4_hwrng_intr, sc, &sc->sc_intr_handler) != 0) {
+		   omap4_hwrng_intr, sc, &sc->sc_intr_handler) != 0) {
 		bus_release_resource(dev, SYS_RES_IRQ, 0, sc->sc_irq_res);
 		bus_release_resource(dev, SYS_RES_MEMORY, 0, sc->sc_irq_res);
 		device_printf(dev, "cannot setup intr handler");
