@@ -31,6 +31,10 @@
 #define OMAP4_HWRNG_CONFIG_MIN_REFIL_CYCLES (0x21)
 #define OMAP4_HWRNG_CONFIG_MAX_REFIL_CYCLES (0x22)
 
+#define OMAP4_HWRNG_ALARM_THRESHOLD	(0xFF)
+#define OMAP4_HWRNG_SHUTDOWN_THRESHOLD	(0x04)
+
+#define OMAP4_HWRNG_CONTROL_STARTUP_CYCLES (0xff)
 
 #define HWRNG_READ(_sc, reg)	bus_read_4((_sc)->sc_mem_res, reg)
 #define HWRNG_WRITE(_sc, reg, val) \
