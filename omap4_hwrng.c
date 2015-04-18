@@ -73,7 +73,7 @@ omap4_hwrng_read(void *buf, int c)
 			/* XXX: delay required? */
 		}
 		tmp = omap4_hwrng_get_data(softc);
-		memcpy(tmp_b+fetched, &tmp, 
+		memcpy(tmp_b+fetched, &tmp,
 		    MIN(c-fetched, OMAP4_HWRNG_DATA_SIZE));
 	}
 
@@ -84,11 +84,11 @@ static int
 omap4_hwrng_init(struct omap4_hwrng_softc *sc)
 {
 	uint32_t val;
-	
+
 	if (HWRNG_READ(sc, OMAP4_HWRNG_CONTROL) &
 	    OMAP4_HWRNG_CONTROL_ENABLE_TRNG)
 		return (0);
-	
+
 	val = OMAP4_HWRNG_CONFIG_MIN_REFIL_CYCLES;
 	val |= OMAP4_HWRNG_CONFIG_MAX_REFIL_CYCLES << 16;
 	HWRNG_WRITE(sc, OMAP4_HWRNG_CONFIG, val);
@@ -113,7 +113,6 @@ omap4_hwrng_stop(struct omap4_hwrng_softc *sc)
 static void
 omap4_hwrng_intr(void *arg)
 {
-	struct omap4_hwrng_softc *sc;
 
 }
 

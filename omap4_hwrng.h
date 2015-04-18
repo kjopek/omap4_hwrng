@@ -28,6 +28,10 @@
 #define OMAP4_HWRNG_CONTROL_ENABLE_TRNG	(0x01 << 10)
 #define OMAP4_HWRNG_INTACK_READY	(0x01)
 
+#define OMAP4_HWRNG_CONFIG_MIN_REFIL_CYCLES (0x21)
+#define OMAP4_HWRNG_CONFIG_MAX_REFIL_CYCLES (0x22)
+
+
 #define HWRNG_READ(_sc, reg)	bus_read_4((_sc)->sc_mem_res, reg)
 #define HWRNG_WRITE(_sc, reg, val) \
 	bus_write_4((_sc)->sc_mem_res, reg, val)

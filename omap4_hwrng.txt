@@ -44,9 +44,14 @@ Register description
    ====================================
    | ?? | READY MASK | SHUTDOWN OFLO? |
 
+ * INTACK
+   | 31-1 |   0   |
+   ================
+   |  ??  | READY |
+
+ * CONTROL
 
 
-DTS (am335x):
   rng: rng@48310000 {
   	compatible = "ti,omap4-rng';
 	ti,hwmods = "rng",
