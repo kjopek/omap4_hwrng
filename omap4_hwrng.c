@@ -21,8 +21,6 @@
 
 // TODO: Add RANDOM_PURE_OMAP4 to /sys/random.h
 
-static int omap4_hwrng_read(void *buf, int c);
-
 static struct omap4_hwrng_softc *softc = NULL;
 static devclass_t omap4_hwrng_devclass;
 
