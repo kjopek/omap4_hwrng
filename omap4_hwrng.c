@@ -70,7 +70,7 @@ omap4_hwrng_read(void *buf, int c)
 	for (fetched = 0; fetched < c; fetched += OMAP4_HWRNG_DATA_SIZE) {
 		/* wait until next portion of data comes */
 		while(!omap4_hwrng_data_ready(softc)) {
-			/* XXX: delay required? */
+			DELAY(10);
 		}
 		tmp = omap4_hwrng_get_data(softc);
 		memcpy(tmp_b+fetched, &tmp,
@@ -120,7 +120,17 @@ omap4_hwrng_stop(struct omap4_hwrng_softc *sc)
 static void
 omap4_hwrng_intr(void *arg)
 {
+	int tmp;
 
+	HWRNG_WRITE(softc, OMAP4_HWRNG_ALARMMASK, 0);
+	HWRNG_WRITE(softc, OMAP4_HWRNG_ALARMSTOP, 0);
+
+	tmp = ~HWRNG_READ(softc, OMAP4_HWRNG_FROENABLE) & 0xffffff;
+	tmp |= HWRNG_READ(softc, OMAP4_HWRNG_FRODETUNE);
+	HWRNG_WRITE(softc, OMAP4_HWRNG_FRODETUNE, tmp);
+	HWRNG_WRITE(softc, OMAP4_HWRNG_FROENABLE, 0xffffff);
+
+	HWRNG_WRITE(softc, OMAP4_HWRNG_INTACK, OMAP4_HWRNG_INTACK_SHUTDOWN_OFLO);
 }
 
 static int
