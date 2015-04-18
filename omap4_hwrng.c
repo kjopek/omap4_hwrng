@@ -108,7 +108,7 @@ omap4_hwrng_init(struct omap4_hwrng_softc *sc)
 static void
 omap4_hwrng_stop(struct omap4_hwrng_softc *sc)
 {
-	int val;
+	uint32_t val;
 
 	val = HWRNG_READ(sc, OMAP4_HWRNG_CONTROL);
 	val &= ~OMAP4_HWRNG_CONTROL_ENABLE_TRNG;
@@ -120,7 +120,7 @@ omap4_hwrng_stop(struct omap4_hwrng_softc *sc)
 static void
 omap4_hwrng_intr(void *arg)
 {
-	int tmp;
+	uint32_t tmp;
 
 	HWRNG_WRITE(softc, OMAP4_HWRNG_ALARMMASK, 0);
 	HWRNG_WRITE(softc, OMAP4_HWRNG_ALARMSTOP, 0);
