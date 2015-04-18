@@ -1,17 +1,13 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
+#include <sys/types.h>
 #include <sys/lock.h>
 #include <sys/malloc.h>
 #include <sys/module.h>
 #include <sys/random.h>
 #include <sys/selinfo.h>
 #include <sys/systm.h>
-
-#include <dev/random/randomdev.h>
-#include <dev/random/randomdev_soft.h>
-#include <dev/random/random_harvestq.h>
-#include <dev/random/live_entropy_sources.h>
-#include <dev/random/random_adaptors.h>
+#include <sys/random.h>
 
 #include <dev/fdt/fdt_common.h>
 #include <dev/ofw/openfirm.h>
@@ -26,12 +22,6 @@
 // TODO: Add RANDOM_PURE_OMAP4 to /sys/random.h
 
 static int omap4_hwrng_read(void *buf, int c);
-
-static struct random_hardware_source random_omap4_rng = {
-	.ident = "OMAP4 Hardware RNG",
-	.source = RANDOM_PURE_OMAP4,
-	.read = omap4_hwrng_read
-}; 
 
 static struct omap4_hwrng_softc *softc = NULL;
 static devclass_t omap4_hwrng_devclass;
@@ -58,28 +48,6 @@ omap4_hwrng_get_data(struct omap4_hwrng_softc *sc)
 	mtx_unlock(&(sc->sc_mtx));
 	ret = ((uint64_t)reg0 << 32) | reg1;
 	return (ret);
-}
-
-static int
-omap4_hwrng_read(void *buf, int c)
-{
-	uint64_t tmp;
-	size_t fetched;
-	char *tmp_b;
-
-	tmp_b = buf;
-
-	for (fetched = 0; fetched < c; fetched += OMAP4_HWRNG_DATA_SIZE) {
-		/* wait until next portion of data comes */
-		while(!omap4_hwrng_data_ready(softc)) {
-			DELAY(10);
-		}
-		tmp = omap4_hwrng_get_data(softc);
-		memcpy(tmp_b+fetched, &tmp,
-		    MIN(c-fetched, OMAP4_HWRNG_DATA_SIZE));
-	}
-
-	return (c);
 }
 
 static int
@@ -141,6 +109,22 @@ omap4_hwrng_intr(void *arg)
 	mtx_unlock(&(softc->sc_mtx));
 }
 
+static void
+omap4_hwrng_harvest(void *arg)
+{
+	struct omap4_hwrng_softc *sc;
+	uint64_t tmp;
+
+	sc = arg;
+	while (!omap4_hwrng_data_ready(sc)) {
+		DELAY(10);
+	}
+
+	tmp = omap4_hwrng_get_data(sc);
+	random_harvest(&tmp, sizeof(tmp), sizeof(tmp)*8, RANDOM_PURE_OMAP4);
+	callout_reset(&sc->sc_callout, hz * 5, omap4_hwrng_harvest, sc);
+}
+
 static int
 omap4_hwrng_probe(device_t dev)
 {
@@ -196,8 +180,8 @@ omap4_hwrng_attach(device_t dev)
 		    MTX_DEF);
 
 	omap4_hwrng_init(sc);
-	live_entropy_source_register(&random_omap4_rng);
-
+	callout_init(&sc->sc_callout, CALLOUT_MPSAFE);
+	callout_reset(&sc->sc_callout, hz*5, omap4_hwrng_harvest, sc);
 	return (0);
 }
 
@@ -208,7 +192,6 @@ omap4_hwrng_detach(device_t dev)
 
 	sc = device_get_softc(dev);
 
-	live_entropy_source_deregister(&random_omap4_rng);
 	omap4_hwrng_stop(sc);
 	mtx_destroy(&(sc->sc_mtx));
 

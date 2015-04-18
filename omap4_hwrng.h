@@ -49,6 +49,7 @@ struct omap4_hwrng_softc {
 	struct resource	*sc_irq_res;
 	struct resource *sc_mem_res;
 	void		*sc_intr_handler;
+	struct callout	sc_callout;
 };
 
 #endif
