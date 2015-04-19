@@ -5,7 +5,7 @@ Hardware details
 ----------------
 
 Warning: the following information is based on analysis of Linux driver
-for OMAP4 RNG.
+for OMAP4 RNG ( drivers/char/hw_random/omap-rng.c ).
 
 RNG is mapped at 0x48310000 for AM335x.
 
@@ -58,4 +58,3 @@ Register description
 	reg = <0x48310000 0x2000>;
 	interrupts = <111>;
   };
-
