@@ -21,7 +21,6 @@
 
 // TODO: Add RANDOM_PURE_OMAP4 to /sys/random.h
 
-static struct omap4_hwrng_softc *softc = NULL;
 static devclass_t omap4_hwrng_devclass;
 
 static int inline
@@ -98,19 +97,21 @@ static void
 omap4_hwrng_intr(void *arg)
 {
 	uint32_t tmp;
+	struct omap4_hwrng_softc *sc;
 
-	tmp = ~HWRNG_READ(softc, OMAP4_HWRNG_FROENABLE) & 0xffffff;
-	tmp |= HWRNG_READ(softc, OMAP4_HWRNG_FRODETUNE);
+	sc = arg;
+	tmp = ~HWRNG_READ(sc, OMAP4_HWRNG_FROENABLE) & 0xffffff;
+	tmp |= HWRNG_READ(sc, OMAP4_HWRNG_FRODETUNE);
 
-	mtx_lock(&(softc->sc_mtx));
-	HWRNG_WRITE(softc, OMAP4_HWRNG_ALARMMASK, 0);
-	HWRNG_WRITE(softc, OMAP4_HWRNG_ALARMSTOP, 0);
+	mtx_lock(&(sc->sc_mtx));
+	HWRNG_WRITE(sc, OMAP4_HWRNG_ALARMMASK, 0);
+	HWRNG_WRITE(sc, OMAP4_HWRNG_ALARMSTOP, 0);
 
-	HWRNG_WRITE(softc, OMAP4_HWRNG_FRODETUNE, tmp);
-	HWRNG_WRITE(softc, OMAP4_HWRNG_FROENABLE, 0xffffff);
+	HWRNG_WRITE(sc, OMAP4_HWRNG_FRODETUNE, tmp);
+	HWRNG_WRITE(sc, OMAP4_HWRNG_FROENABLE, 0xffffff);
 
-	HWRNG_WRITE(softc, OMAP4_HWRNG_INTACK, OMAP4_HWRNG_INTACK_SHUTDOWN_OFLO);
-	mtx_unlock(&(softc->sc_mtx));
+	HWRNG_WRITE(sc, OMAP4_HWRNG_INTACK, OMAP4_HWRNG_INTACK_SHUTDOWN_OFLO);
+	mtx_unlock(&(sc->sc_mtx));
 }
 
 static void
@@ -149,11 +150,7 @@ omap4_hwrng_attach(device_t dev)
 	int rid;
 	struct omap4_hwrng_softc *sc;
 
-	if (softc != NULL) {
-		return (ENXIO);
-	}
-
-	sc = softc = device_get_softc(dev);
+	sc = device_get_softc(dev);
 	sc->sc_dev = dev;
 	rid = 0;
 	sc->sc_mem_res = bus_alloc_resource_any(dev, SYS_RES_MEMORY, &rid,
