@@ -196,6 +196,8 @@ omap4_hwrng_detach(device_t dev)
 
 	sc = device_get_softc(dev);
 
+	callout_drain(&sc->sc_callout);
+
 	omap4_hwrng_stop(sc);
 	mtx_destroy(&(sc->sc_mtx));
 
