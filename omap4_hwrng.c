@@ -41,37 +41,42 @@ omap4_hwrng_get_data(struct omap4_hwrng_softc *sc)
 
 	reg0 = HWRNG_READ(sc, OMAP4_HWRNG_OUTPUT_H);
 	reg1 = HWRNG_READ(sc, OMAP4_HWRNG_OUTPUT_L);
+
+	ret = ((uint64_t)reg0 << 32) | reg1;
+
 	mtx_lock(&(sc->sc_mtx));
 	HWRNG_WRITE(sc, OMAP4_HWRNG_INTACK, OMAP4_HWRNG_INTACK_READY);
 	mtx_unlock(&(sc->sc_mtx));
-	ret = ((uint64_t)reg0 << 32) | reg1;
+
 	return (ret);
 }
 
 static int
 omap4_hwrng_init(struct omap4_hwrng_softc *sc)
 {
-	uint32_t val;
+	uint32_t config, threshold, control;
 
 	if (HWRNG_READ(sc, OMAP4_HWRNG_CONTROL) &
 	    OMAP4_HWRNG_CONTROL_ENABLE_TRNG)
 		return (0);
 	
+	config = OMAP4_HWRNG_CONFIG_MIN_REFIL_CYCLES;
+	config |= OMAP4_HWRNG_CONFIG_MAX_REFIL_CYCLES << 16;
+
+	threshold = OMAP4_HWRNG_ALARM_THRESHOLD;
+	threshold |= OMAP4_HWRNG_SHUTDOWN_THRESHOLD << 16;
+
+	control = OMAP4_HWRNG_CONTROL_STARTUP_CYCLES << 16;
+	control |= OMAP4_HWRNG_CONTROL_ENABLE_TRNG;
+
 	mtx_lock(&(sc->sc_mtx));
-	val = OMAP4_HWRNG_CONFIG_MIN_REFIL_CYCLES;
-	val |= OMAP4_HWRNG_CONFIG_MAX_REFIL_CYCLES << 16;
-	HWRNG_WRITE(sc, OMAP4_HWRNG_CONFIG, val);
+	HWRNG_WRITE(sc, OMAP4_HWRNG_CONFIG, config);
 	HWRNG_WRITE(sc, OMAP4_HWRNG_FRODETUNE, 0);
 	HWRNG_WRITE(sc, OMAP4_HWRNG_FROENABLE, 0xffffff);
-
-	val = OMAP4_HWRNG_ALARM_THRESHOLD;
-	val |= OMAP4_HWRNG_SHUTDOWN_THRESHOLD << 16;
-	HWRNG_WRITE(sc, OMAP4_HWRNG_ALARMCNT, val);
-
-	val = OMAP4_HWRNG_CONTROL_STARTUP_CYCLES << 16;
-	val |= OMAP4_HWRNG_CONTROL_ENABLE_TRNG;
-	HWRNG_WRITE(sc, OMAP4_HWRNG_CONTROL, val);
+	HWRNG_WRITE(sc, OMAP4_HWRNG_ALARMCNT, threshold);
+	HWRNG_WRITE(sc, OMAP4_HWRNG_CONTROL, control);
 	mtx_unlock(&(sc->sc_mtx));
+
 	return (0);
 }
 
@@ -94,12 +99,13 @@ omap4_hwrng_intr(void *arg)
 {
 	uint32_t tmp;
 
+	tmp = ~HWRNG_READ(softc, OMAP4_HWRNG_FROENABLE) & 0xffffff;
+	tmp |= HWRNG_READ(softc, OMAP4_HWRNG_FRODETUNE);
+
 	mtx_lock(&(softc->sc_mtx));
 	HWRNG_WRITE(softc, OMAP4_HWRNG_ALARMMASK, 0);
 	HWRNG_WRITE(softc, OMAP4_HWRNG_ALARMSTOP, 0);
 
-	tmp = ~HWRNG_READ(softc, OMAP4_HWRNG_FROENABLE) & 0xffffff;
-	tmp |= HWRNG_READ(softc, OMAP4_HWRNG_FRODETUNE);
 	HWRNG_WRITE(softc, OMAP4_HWRNG_FRODETUNE, tmp);
 	HWRNG_WRITE(softc, OMAP4_HWRNG_FROENABLE, 0xffffff);
 
