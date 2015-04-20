@@ -43,9 +43,9 @@ omap4_hwrng_get_data(struct omap4_hwrng_softc *sc)
 
 	ret = ((uint64_t)reg0 << 32) | reg1;
 
-	mtx_lock(&(sc->sc_mtx));
+	mtx_lock(&sc->sc_mtx);
 	HWRNG_WRITE(sc, OMAP4_HWRNG_INTACK, OMAP4_HWRNG_INTACK_READY);
-	mtx_unlock(&(sc->sc_mtx));
+	mtx_unlock(&sc->sc_mtx);
 
 	return (ret);
 }
@@ -68,13 +68,13 @@ omap4_hwrng_init(struct omap4_hwrng_softc *sc)
 	control = OMAP4_HWRNG_CONTROL_STARTUP_CYCLES << 16;
 	control |= OMAP4_HWRNG_CONTROL_ENABLE_TRNG;
 
-	mtx_lock(&(sc->sc_mtx));
+	mtx_lock(&sc->sc_mtx);
 	HWRNG_WRITE(sc, OMAP4_HWRNG_CONFIG, config);
 	HWRNG_WRITE(sc, OMAP4_HWRNG_FRODETUNE, 0);
 	HWRNG_WRITE(sc, OMAP4_HWRNG_FROENABLE, 0xffffff);
 	HWRNG_WRITE(sc, OMAP4_HWRNG_ALARMCNT, threshold);
 	HWRNG_WRITE(sc, OMAP4_HWRNG_CONTROL, control);
-	mtx_unlock(&(sc->sc_mtx));
+	mtx_unlock(&sc->sc_mtx);
 
 	return (0);
 }
@@ -86,11 +86,11 @@ omap4_hwrng_stop(struct omap4_hwrng_softc *sc)
 
 	val = HWRNG_READ(sc, OMAP4_HWRNG_CONTROL);
 	val &= ~OMAP4_HWRNG_CONTROL_ENABLE_TRNG;
-	mtx_lock(&(sc->sc_mtx));
+	mtx_lock(&sc->sc_mtx);
 	/* Driver for Linux writes value to CONFIG register
 	 * maybe it is broken? Needs tests */
 	HWRNG_WRITE(sc, OMAP4_HWRNG_CONTROL, val);
-	mtx_unlock(&(sc->sc_mtx));
+	mtx_unlock(&sc->sc_mtx);
 }
 
 static void
@@ -103,7 +103,7 @@ omap4_hwrng_intr(void *arg)
 	tmp = ~HWRNG_READ(sc, OMAP4_HWRNG_FROENABLE) & 0xffffff;
 	tmp |= HWRNG_READ(sc, OMAP4_HWRNG_FRODETUNE);
 
-	mtx_lock(&(sc->sc_mtx));
+	mtx_lock(&sc->sc_mtx);
 	HWRNG_WRITE(sc, OMAP4_HWRNG_ALARMMASK, 0);
 	HWRNG_WRITE(sc, OMAP4_HWRNG_ALARMSTOP, 0);
 
@@ -111,7 +111,7 @@ omap4_hwrng_intr(void *arg)
 	HWRNG_WRITE(sc, OMAP4_HWRNG_FROENABLE, 0xffffff);
 
 	HWRNG_WRITE(sc, OMAP4_HWRNG_INTACK, OMAP4_HWRNG_INTACK_SHUTDOWN_OFLO);
-	mtx_unlock(&(sc->sc_mtx));
+	mtx_unlock(&sc->sc_mtx);
 }
 
 static void
