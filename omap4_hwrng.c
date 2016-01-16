@@ -58,7 +58,7 @@ omap4_hwrng_init(struct omap4_hwrng_softc *sc)
 	if (HWRNG_READ(sc, OMAP4_HWRNG_CONTROL) &
 	    OMAP4_HWRNG_CONTROL_ENABLE_TRNG)
 		return (0);
-	
+
 	config = OMAP4_HWRNG_CONFIG_MIN_REFIL_CYCLES;
 	config |= OMAP4_HWRNG_CONFIG_MAX_REFIL_CYCLES << 16;
 
